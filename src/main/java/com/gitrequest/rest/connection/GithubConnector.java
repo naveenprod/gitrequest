@@ -1,45 +1,51 @@
 package com.gitrequest.rest.connection;
 
-import com.google.gson.Gson;
+import io.deepstream.DeepstreamClient;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.kohsuke.github.GHEvent;
+import org.kohsuke.github.GHHook;
+import org.kohsuke.github.GHIssueState;
+import org.kohsuke.github.GHPullRequest;
+import org.kohsuke.github.GHRepository;
+import org.kohsuke.github.GitHub;
+
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
-import org.kohsuke.github.*;
-
-import io.deepstream.DeepstreamClient;
-import io.deepstream.Record;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.*;
-import java.util.*;
 
 public class GithubConnector {
 
 	private GitHub gitHub;
-	private DeepstreamClient deepstreamClient = null;
+	private static DeepstreamClient deepstreamClient = null;
 	private String REPO_URL ="/GitRequest"+"/"+"rest"+"/"+"git"+"/"+"event";
-	private  String deepstreamURI = "0.0.0.0:6020";
-	private  String webhookURI = "http://da45aa06.ngrok.io";
+	private  String webhookURI = "http://285fc67f.ngrok.io";
 	private  String repo = "naveenprod/gitrequest";
+	private  boolean isServerStarted=false;
+	private static GithubConnector instance=null;
 
-	/*public static void main(String[] args) throws IOException {
-		new GithubConnector(deepstreamURI, webhookURI, repo);
-	}*/
-
-	public GithubConnector(String deepstreamURI, String webhookURI, String repo) throws IOException {
+	
+	public static GithubConnector getInstance(String deepstreamURI, String webhookURI, String repo){
 		try {
-			deepstreamClient = new DeepstreamClient(deepstreamURI);
-			deepstreamClient.login(new JsonObject());
+			if(instance==null){
+				instance = new GithubConnector();
+				deepstreamClient = new DeepstreamClient(deepstreamURI);
+				deepstreamClient.login(new JsonObject());
+				
+			}
 		} catch (URISyntaxException e) {
-			System.out.format("Malformed deepstream URI '%s'%n", deepstreamURI);
 			throw new RuntimeException(e);
 		}
-
-		System.out.println("Connected to deepstream successfully");
+		return instance;
 	}
 
 	// connect to github
@@ -53,74 +59,49 @@ public class GithubConnector {
 		}
 		return repository;
 	}
-	public List<GHPullRequest> getPullRequestData(GHRepository repository){
+	public List<List<GHPullRequest>> getPullRequestData(GHRepository repository){
+		List<List<GHPullRequest>> allList = new ArrayList<List<GHPullRequest>>();
 		List<GHPullRequest> gitpullList=null;
 		try {
 			for (GHHook hook : repository.getHooks()) {  // cleanup any pre-existing web hooks
 				hook.delete();
 			}
-			startServer();								 // start the web hook listener
-			List<GHEvent> events = Arrays.asList(GHEvent.PULL_REQUEST);  // subscribe to webhooks for Issue update events
+			if(!isServerStarted){
+				startServer();
+			}
+			List<GHEvent> events = Arrays.asList(GHEvent.PULL_REQUEST);  // subscribe to webhooks for pull update events
 			repository.createWebHook(new URL(webhookURI+REPO_URL), events);
-			gitpullList = repository.getPullRequests(GHIssueState.ALL);
+			gitpullList = repository.getPullRequests(GHIssueState.OPEN);
+			allList.add(gitpullList);
+			gitpullList = repository.getPullRequests(GHIssueState.CLOSED);
+			allList.add(gitpullList);
 
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		return gitpullList;
+		return allList;
 	}
 
 
 
 	public void startServer() throws IOException {
-		if(available(3000)){
+			isServerStarted = true;
 			HttpServer server = HttpServer.create(new InetSocketAddress(3000), 0);
 			server.createContext("/", new RequestHandler() );
 			server.setExecutor(null);
 			server.start();
 		}
-	}
 
-	private static boolean available(int port) {
+	/*private static boolean available(int port) {
 		try (Socket ignored = new Socket("localhost", port)) {
 			return false;
 		} catch (IOException ignored) {
 			return true;
 		}
-	}
+	}*/
 	class RequestHandler implements HttpHandler {
 
 		public void handle(HttpExchange httpExchange) throws IOException {
-			InputStreamReader isr = new InputStreamReader(httpExchange.getRequestBody(), "utf-8");
-			BufferedReader br = new BufferedReader(isr);
-			String query = br.readLine();
-			String payload = URLDecoder.decode(query, "utf-8").replaceFirst("payload=", "");
-
-			Gson gson = new Gson();
-			JsonObject issueEvent = gson.fromJson(payload, JsonObject.class);
-
-			String action = issueEvent.get("action").getAsString();
-
-			JsonObject issue = issueEvent.get("issue").getAsJsonObject();
-			String issueId = issue.get("id").getAsString();
-
-			if (action.equals("edited")){
-				String issueTitle = issue.get("title").getAsString();
-				String issueUrl = issue.get("html_url").getAsString();
-
-				deepstreamClient.record.getRecord(issueId)
-				.set("title", issueTitle)
-				.set("url", issueUrl);
-			} else if (action.equals("labeled")) {
-				deepstreamClient.record
-				.getList(issueEvent.get("label").getAsJsonObject().get("name").getAsString())
-				.addEntry(issueId);
-			} else if (action.equals("unlabeled")) {
-				deepstreamClient.record
-				.getList(issueEvent.get("label").getAsJsonObject().get("name").getAsString())
-				.removeEntry(issueId);
-			}
-
 			httpExchange.sendResponseHeaders(200, 0);
 			OutputStream os = httpExchange.getResponseBody();
 			os.close();

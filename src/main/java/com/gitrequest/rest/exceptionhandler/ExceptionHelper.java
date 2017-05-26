@@ -26,6 +26,10 @@ public class ExceptionHelper {
 		return response.toString();
 	}
 	
+	public static String internalServerError(){
+		response = new JSONObject("{Data:"+"Internal Server Error"+", Response : '201 Ok'}");
+		return response.toString();
+	}
 	
 	
 

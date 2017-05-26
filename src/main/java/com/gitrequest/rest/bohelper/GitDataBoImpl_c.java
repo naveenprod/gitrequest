@@ -6,7 +6,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.gitrequest.rest.bo.GitData;
-import com.gitrequest.rest.bo.GitDataBo;
 import com.gitrequest.rest.dao.daoimpl.GitDaoImpl;
 
 public class GitDataBoImpl implements GitDataBo{

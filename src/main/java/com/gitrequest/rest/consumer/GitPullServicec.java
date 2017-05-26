@@ -20,7 +20,7 @@ import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 
 
-@Path("/git/consume")
+@Path("/consume")
 public class GitPullService {
 
 	private  String GIT_PULL_URL="https://api.github.com/repos/hmkcode/java/pulls?state=all";
