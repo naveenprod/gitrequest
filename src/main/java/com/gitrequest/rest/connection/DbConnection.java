@@ -33,12 +33,14 @@ public class DbConnection {
 	}
 	public static DB getConnection(){
 		MongoClient mongoClient=null;
+		DB mongoDb=null;
 		try {
 			mongoClient = new MongoClient( prop.getProperty("dbhost") ,Integer.parseInt(prop.getProperty("dbport")));
+			mongoDb = mongoClient.getDB(prop.getProperty("dbname"));
 		} catch (NumberFormatException | UnknownHostException e) {
 			e.printStackTrace();
-		}
-		DB mongoDb = mongoClient.getDB(prop.getProperty("dbname"));
+			return null;
+		}		
 		return mongoDb;
 	}
 	

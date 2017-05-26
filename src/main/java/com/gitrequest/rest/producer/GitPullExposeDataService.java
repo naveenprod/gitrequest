@@ -13,7 +13,7 @@ import com.gitrequest.rest.exceptionhandler.ExceptionHelper;
 import com.mongodb.util.JSON;
 
 @Path("/git")
-public class GitPullDataService {
+public class GitPullExposeDataService {
 	String gitPullData = "";
 	@GET
 	@Produces({MediaType.APPLICATION_JSON})
