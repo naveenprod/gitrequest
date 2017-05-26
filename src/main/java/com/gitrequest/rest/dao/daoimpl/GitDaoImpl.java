@@ -8,6 +8,7 @@ import java.util.Properties;
 import com.gitrequest.rest.connection.DbConnection;
 import com.gitrequest.rest.bo.GitData;
 import com.gitrequest.rest.dao.GitDao;
+import com.gitrequest.rest.util.Util;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
@@ -26,7 +27,7 @@ public class GitDaoImpl implements GitDao{
 		Properties prop=null;
 		boolean isInserted=false;
 		try {
-			prop = DbConnection.getInstance().readFile();
+			prop = new Util().readFile();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -55,7 +56,7 @@ public class GitDaoImpl implements GitDao{
 		Properties prop=null;
 		String resultData="";
 		try {
-			prop = DbConnection.getInstance().readFile();
+			prop = new Util().readFile();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
