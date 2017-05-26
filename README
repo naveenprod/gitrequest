@@ -1,0 +1,24 @@
+This is Web Project
+
+Consumer
+
+1. GitPullService (Where you can get data for the states(Pull Request)). 
+http://285fc67f.ngrok.io/GitRequest/rest/git/consume
+
+2. EventHandler (Which is the Git hub webhook for getting notification of any pull request in repo). Whenever any pull related changes happen in repo.The webhook will genrate one event and that event will catch by this application and store data in db.
+
+http://285fc67f.ngrok.io/GitRequest/rest/git/event
+Producer
+
+1. GitPullExposeDataService (This is will expose one service which you can you to get the stored data). Currently it support only state related query
+http://285fc67f.ngrok.io/GitRequest/rest/git/state
+
+ErrorCode :- This application handle error code, Mostly. 2XX and 4XX
+
+DB :- Monogo Db (db name : git and collection name is : gitrequest)
+
+Miscellaneous 
+
+I've used ngrok server to expose my localhost to internet. So I can access the webhook I applied on my github repo.
+
+
