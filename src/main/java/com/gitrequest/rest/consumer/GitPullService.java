@@ -23,16 +23,17 @@ import com.sun.jersey.api.client.WebResource;
 @Path("/git/consume")
 public class GitPullService {
 
-	private  String GIT_PULL_URL="https://api.github.com/repos/hmkcode/java/pulls?state=all";
+	private Properties prop=null;
 	private  List<GitData> gitDataList= new ArrayList<GitData>();
 	private String output="No Data";
-
+	
 	@GET
 	@Consumes
 	public String consumeGitPullRequest() {
 		try {
+			prop= new Util().readFile();
 			Client client = Client.create();
-			WebResource webResource = client.resource(GIT_PULL_URL);
+			WebResource webResource = client.resource(prop.getProperty("GIT_URL")+prop.getProperty("GITHUB_NAME")+prop.getProperty("GITHUB_REPO")+prop.getProperty("GIT_POSTFIX"));
 			ClientResponse response = webResource.accept("application/json").get(ClientResponse.class);
 			if (response.getStatus() != 200) {
 				throw new RuntimeException("Failed : HTTP error code : "
