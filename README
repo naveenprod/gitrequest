@@ -21,4 +21,8 @@ Miscellaneous
 
 I've used ngrok server to expose my localhost to internet. So I can access the webhook I applied on my github repo.
 
+I've tried to cover all the cases in this application but I still feel there is space to improve.
+
+As of now Testcases are not added becuase of time limitation. I'll try to add ASAP.
+
 
