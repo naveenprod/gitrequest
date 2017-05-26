@@ -10,6 +10,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 
 import org.kohsuke.github.GHEvent;
 import org.kohsuke.github.GHHook;
@@ -18,6 +19,8 @@ import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;
 
+import com.gitrequest.rest.exceptionhandler.ExceptionHelper;
+import com.gitrequest.rest.util.Util;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -27,20 +30,20 @@ public class GithubConnector {
 
 	private GitHub gitHub;
 	private static DeepstreamClient deepstreamClient = null;
-	private String REPO_URL ="/GitRequest"+"/"+"rest"+"/"+"git"+"/"+"event";
-	private  String webhookURI = "http://285fc67f.ngrok.io";
-	private  String repo = "naveenprod/gitrequest";
+	static Properties prop=null;
 	private  boolean isServerStarted=false;
 	private static GithubConnector instance=null;
-
-	
 	public static GithubConnector getInstance(String deepstreamURI, String webhookURI, String repo){
 		try {
 			if(instance==null){
 				instance = new GithubConnector();
 				deepstreamClient = new DeepstreamClient(deepstreamURI);
 				deepstreamClient.login(new JsonObject());
-				
+				try {
+					prop = new Util().readFile();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
 		} catch (URISyntaxException e) {
 			throw new RuntimeException(e);
@@ -53,7 +56,7 @@ public class GithubConnector {
 		GHRepository repository=null;
 		try {
 			gitHub = GitHub.connect();
-			repository = gitHub.getRepository(repo);
+			repository = gitHub.getRepository(prop.getProperty("GITHUB_NAME")+prop.getProperty("GITHUB_REPO"));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -70,7 +73,7 @@ public class GithubConnector {
 				startServer();
 			}
 			List<GHEvent> events = Arrays.asList(GHEvent.PULL_REQUEST);  // subscribe to webhooks for pull update events
-			repository.createWebHook(new URL(webhookURI+REPO_URL), events);
+			repository.createWebHook(new URL(prop.getProperty("WEBHOOK_URI")+prop.getProperty("REPO_URL")), events);
 			gitpullList = repository.getPullRequests(GHIssueState.OPEN);
 			allList.add(gitpullList);
 			gitpullList = repository.getPullRequests(GHIssueState.CLOSED);

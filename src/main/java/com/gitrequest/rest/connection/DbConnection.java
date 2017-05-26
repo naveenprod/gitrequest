@@ -9,13 +9,14 @@ import java.net.UnknownHostException;
 import java.util.Properties;
 
 import com.gitrequest.rest.dao.daoimpl.GitDaoImpl;
+import com.gitrequest.rest.exceptionhandler.ExceptionHelper;
+import com.gitrequest.rest.util.Util;
 import com.mongodb.DB;
 import com.mongodb.MongoClient;
 
 public class DbConnection {
 
-	private static String FILENAME = "connection.properties";
-	private static Properties prop = new Properties();
+	private static Properties prop = null;
 	private DbConnection(){}
 	
 	private static DbConnection m_instance = new DbConnection();
@@ -23,18 +24,17 @@ public class DbConnection {
 		return m_instance;
 	}
 
-	public Properties readFile() throws IOException{
-		ClassLoader classLoader = getClass().getClassLoader();
-		File file = new File(classLoader.getResource(FILENAME).getFile());
-		InputStream in = new FileInputStream(file);
-		prop.load(in);
-		return prop;
-		
-	}
+	
 	public static DB getConnection(){
 		MongoClient mongoClient=null;
 		DB mongoDb=null;
 		try {
+			try {
+				prop = new Util().readFile();
+			} catch (IOException e) {
+				e.printStackTrace();
+				return null;
+			}
 			mongoClient = new MongoClient( prop.getProperty("dbhost") ,Integer.parseInt(prop.getProperty("dbport")));
 			mongoDb = mongoClient.getDB(prop.getProperty("dbname"));
 		} catch (NumberFormatException | UnknownHostException e) {

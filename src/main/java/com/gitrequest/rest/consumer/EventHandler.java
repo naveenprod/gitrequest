@@ -3,6 +3,7 @@ package com.gitrequest.rest.consumer;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -14,20 +15,25 @@ import org.kohsuke.github.GHRepository;
 
 import com.gitrequest.rest.bo.GitData;
 import com.gitrequest.rest.bohelper.GitDataBoImpl;
+import com.gitrequest.rest.connection.DbConnection;
 import com.gitrequest.rest.connection.GithubConnector;
 import com.gitrequest.rest.exceptionhandler.ExceptionHelper;
+import com.gitrequest.rest.util.Util;
 
 @Path("/git/event")
 public class EventHandler {
-	String DEEPSTREAM_URI="0.0.0.0:6020";
-	String WEBHOOK_URI="http://285fc67f.ngrok.io";
-	String GITHUB_REPO="naveenprod/gitrequest";
 	private  List<GitData> gitDataList= new ArrayList<GitData>();
-
+	Properties prop=null;
 	@POST
 	@Produces
 	public String getGitEvent(){
-		GithubConnector githubConnector = GithubConnector.getInstance(DEEPSTREAM_URI, WEBHOOK_URI, GITHUB_REPO);
+		try {
+			prop = new Util().readFile();
+		} catch (IOException e) {
+			e.printStackTrace();
+			return ExceptionHelper.getResponse(null);
+		}
+		GithubConnector githubConnector = GithubConnector.getInstance(prop.getProperty("DEEPSTREAM_URI"), prop.getProperty("WEBHOOK_URI"), prop.getProperty("GITHUB_REPO"));
 		GHRepository repository = githubConnector.conectToGitHub();
 		List<List<GHPullRequest>> allList = githubConnector.getPullRequestData(repository);
 		if(null!=allList){
